@@ -74,19 +74,26 @@ impl CPU {
     }
 
     pub fn decode(&mut self, opcode: u16) {
+        if self.delay_timer > 0 {
+            self.delay_timer -= 1
+        }
+
         let instruction = (
             (0xF000 & opcode) >> 12,
             (0x0F00 & opcode) >> 8,
             (0x00F0 & opcode) >> 4,
             (0x000F & opcode),
         );
-        //println!("Opcode {:X}", opcode);
+
+        // println!("Opcode {:X}", opcode);
+
         let nn: u8 = (0x00FF & opcode).try_into().unwrap();
         let nnn: u16 = 0x0FFF & opcode;
 
         let n: u8 = instruction.3.try_into().unwrap();
         let x: u8 = instruction.1.try_into().unwrap();
         let y: u8 = instruction.2.try_into().unwrap();
+
         match instruction {
             (0x0, 0x0, 0xe, 0x0) => self.op_00e0(),
             (0x1, _, _, _) => self.op_1nnn(nnn),
@@ -339,14 +346,17 @@ impl CPU {
     }
 
     fn op_fx0a(&mut self, x: u8) {
+        let mut key_pressed = false;
         for (key, pressed) in self.keys.iter().enumerate() {
             if *pressed {
-                println!("Pressed");
                 self.var_registers[x as usize] = key as u8;
-                return;
+                key_pressed = true;
+                break;
             }
         }
-        self.program_counter -= 1
+        if !key_pressed {
+            self.program_counter -= 2;
+        }
     }
 
     fn op_fx29(&mut self, x: u8) {
