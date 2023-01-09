@@ -3,10 +3,10 @@
 use rand::{thread_rng, Rng};
 use std::{fs::File, io::Read};
 
-use crate::{font::{FONT, SPRITE_WIDTH}};
+use crate::font::{FONT, SPRITE_WIDTH};
 
-use self::stack::Stack;
 mod stack;
+use stack::Stack;
 
 const RAM: usize = 4096;
 pub const CHIP8_WIDTH: usize = 64;
@@ -24,7 +24,7 @@ pub struct CPU {
     sound_timer: u8,
     var_registers: [u8; 16],
     keys: [bool; KEY_COUNT],
-    super_chip: bool
+    super_chip: bool,
 }
 
 impl CPU {
@@ -56,10 +56,10 @@ impl CPU {
 
     pub fn keypress(&mut self, input: usize, pressed: bool) {
         self.keys[input] = pressed;
-        // println!("pressed: {}, {}", input, self.keys[input]);
+        //println!("pressed: {}, {}", input, self.keys[input]);
     }
 
-    pub fn fetch(&mut self) -> u16 {
+    fn fetch(&mut self) -> u16 {
         if self.program_counter >= RAM {
             panic!(
                 "PC jumped out of range of RAM: {0} >= {RAM}",
@@ -75,7 +75,23 @@ impl CPU {
         final_instruction
     }
 
-    pub fn decode(&mut self, opcode: u16) {
+    pub fn cycle_timers(&mut self) {
+        if self.delay_timer > 0 {
+            self.delay_timer -= 1;
+        }
+
+        if self.sound_timer > 0 {
+            self.sound_timer -= 1;
+            println!("Beep");
+        }
+    }
+
+    pub fn cycle(&mut self) {
+        let opcode = self.fetch();
+        self.decode(opcode);
+    }
+
+    fn decode(&mut self, opcode: u16) {
         if self.delay_timer > 0 {
             self.delay_timer -= 1
         }
@@ -133,7 +149,6 @@ impl CPU {
             (0xf, _, 6, 5) => self.op_fx65(x),
             _ => self.unknown_instruction(instruction),
         };
-
     }
 
     fn unknown_instruction(&mut self, instruction: (u16, u16, u16, u16)) {
@@ -169,6 +184,7 @@ impl CPU {
     // Skip
     fn op_3xnn(&mut self, x: u8, nn: u8) {
         let val = self.var_registers[x as usize];
+        // println!("{val} {nn}");
         if val == nn {
             self.program_counter += 2;
         }

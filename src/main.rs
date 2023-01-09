@@ -11,14 +11,17 @@ mod display;
 pub mod font;
 mod input;
 
+use cpu::CPU;
+
 fn main() {
+
     let sdl_context = sdl2::init().unwrap();
 
     let mut display = Display::new(&sdl_context, 20);
     let mut input = Input::new(&sdl_context);
 
     let file = File::open("Keypad Test [Hap, 2006].ch8").expect("msg");
-    let mut c = cpu::CPU::new(false);
+    let mut c = CPU::new(false);
     c.load_rom_in_ram(file);
 
     loop {
@@ -36,13 +39,15 @@ fn main() {
         }
         let vram = c.get_vram();
         display.draw(vram);
-
+        
         for _ in 0..12 {
-            let opcode = c.fetch();
-
-            c.decode(opcode);
+            c.cycle();
         }
         
-        ::std::thread::sleep(Duration::new(0, ((1_000_000_000u128 - t0.elapsed().as_nanos()) / 60).try_into().unwrap()));
+        c.cycle_timers();
+
+        let elapsed = t0.elapsed().as_nanos();
+
+        ::std::thread::sleep(Duration::new(0, ((1_000_000_000u128 - elapsed) / 60).try_into().unwrap()));
     }
 }
