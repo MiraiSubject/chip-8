@@ -1,44 +1,18 @@
-use sdl2::EventPump;
-use sdl2::event::Event;
-use sdl2::Sdl;
-use sdl2::keyboard::{Keycode, Scancode};
-pub struct Input {
+use sdl2::{Sdl, EventPump, event::Event, keyboard::{Keycode, Scancode}};
+
+use crate::frontend::input::{Chip8KeyCode, Input};
+
+pub struct SDLInput {
     event_pump: EventPump,
-    pressed: bool
 }
 
-pub enum Chip8KeyCode {
-    One,
-    Two,
-    Three,
-    C,
-    Four,
-    Five,
-    Six,
-    D,
-    Seven,
-    Eight,
-    Nine,
-    E,
-    A,
-    Zero,
-    B,
-    F,
-    Exit
-}
-
-impl Input {
-    pub fn new(sdl_context: &Sdl) -> Self {
-        Self {
-            event_pump: sdl_context.event_pump().unwrap(),
-            pressed: false
-        }
+impl Input for SDLInput {
+    fn new() -> Self {
+        todo!()
     }
 
-    pub fn input_loop(&mut self) -> (Option<Chip8KeyCode>, bool) {
+    fn input_loop(&mut self) -> (Option<Chip8KeyCode>, bool) {
         if let Some(event) = self.event_pump.poll_event() {
-            self.pressed = event.is_keyboard() || event.is_controller();
-            // println!("{}", self.pressed);
             return match event {
                 Event::Quit {..} |
                 Event::KeyDown { keycode: Some(Keycode::Escape), .. } => (Some(Chip8KeyCode::Exit), true),
@@ -80,26 +54,12 @@ impl Input {
         }
         (None, false)
     }
+}
 
-    pub fn decode_input(input: Chip8KeyCode) -> usize {
-        match input {
-            Chip8KeyCode::One => 1,
-            Chip8KeyCode::Two => 2,
-            Chip8KeyCode::Three => 3,
-            Chip8KeyCode::C => 0xc,
-            Chip8KeyCode::Four => 4,
-            Chip8KeyCode::Five => 5,
-            Chip8KeyCode::Six => 6,
-            Chip8KeyCode::D => 0xd,
-            Chip8KeyCode::Seven => 7,
-            Chip8KeyCode::Eight => 8,
-            Chip8KeyCode::Nine => 9,
-            Chip8KeyCode::E => 0xe,
-            Chip8KeyCode::A => 0xa,
-            Chip8KeyCode::Zero => 0,
-            Chip8KeyCode::B => 0xb,
-            Chip8KeyCode::F => 0xf,
-            Chip8KeyCode::Exit => 0,
+impl SDLInput {
+    pub fn from_context(sdl_context: &Sdl) -> Self {
+        Self {
+            event_pump: sdl_context.event_pump().unwrap(),
         }
     }
 }
