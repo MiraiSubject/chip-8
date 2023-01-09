@@ -75,15 +75,16 @@ impl CPU {
         final_instruction
     }
 
-    pub fn cycle_timers(&mut self) {
+    pub fn cycle_timers(&mut self) -> u8 {
         if self.delay_timer > 0 {
             self.delay_timer -= 1;
         }
 
         if self.sound_timer > 0 {
             self.sound_timer -= 1;
-            println!("Beep");
         }
+
+        self.sound_timer
     }
 
     pub fn cycle(&mut self) {

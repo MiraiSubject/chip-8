@@ -3,13 +3,14 @@
 mod software;
 
 mod input;
+mod audio;
 use core::panic;
 
 use input::SDLInput;
 
 use crate::frontend::Frontend;
 
-use self::software::SDL2SoftwareDisplay;
+use self::{software::SDL2SoftwareDisplay, audio::AudioBackend};
 
 #[derive(Debug)]
 pub enum SDLDisplayRenderer {
@@ -21,7 +22,8 @@ pub enum SDLDisplayRenderer {
 
 pub struct SDL2Frontend {
     display: SDL2SoftwareDisplay,
-    input: SDLInput
+    input: SDLInput,
+    audio: AudioBackend
 }
 
 impl Frontend for SDL2Frontend {
@@ -45,6 +47,7 @@ impl SDL2Frontend {
     pub fn new_frontend(renderer: SDLDisplayRenderer, render_scale: u32) -> Self {
         let sdl_context = sdl2::init().unwrap();
         let input = SDLInput::from_context(&sdl_context);
+        let audio = AudioBackend::new(&sdl_context);
 
         let display = match renderer {
             SDLDisplayRenderer::Software => SDL2SoftwareDisplay::from_context(&sdl_context, render_scale),
@@ -55,7 +58,12 @@ impl SDL2Frontend {
         };
         Self {
             display,
-            input
+            input,
+            audio
         }
+    }
+
+    pub fn audio(&self) -> &AudioBackend {
+        &self.audio
     }
 }

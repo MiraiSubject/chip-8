@@ -43,7 +43,13 @@ fn main() {
             c.cycle();
         }
         
-        c.cycle_timers();
+        let sound_timer = c.cycle_timers();
+
+        if sound_timer > 0 {
+            fr.audio().start_beep();
+        } else {
+            fr.audio().stop_beep();
+        }
 
         let elapsed = t0.elapsed().as_nanos();
 
