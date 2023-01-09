@@ -85,7 +85,7 @@ impl Input {
         match input {
             Chip8KeyCode::One => 1,
             Chip8KeyCode::Two => 2,
-            Chip8KeyCode::Three => 2,
+            Chip8KeyCode::Three => 3,
             Chip8KeyCode::C => 0xc,
             Chip8KeyCode::Four => 4,
             Chip8KeyCode::Five => 5,
