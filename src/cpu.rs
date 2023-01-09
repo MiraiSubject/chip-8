@@ -55,14 +55,16 @@ impl CPU {
     }
 
     pub fn keypress(&mut self, input: usize, pressed: bool) {
-        println!("pressed: {input}, {pressed}");
         self.keys[input] = pressed;
+        // println!("pressed: {}, {}", input, self.keys[input]);
     }
 
     pub fn fetch(&mut self) -> u16 {
-
         if self.program_counter >= RAM {
-            panic!("PC jumped out of range of RAM: {0} >= {RAM}", self.program_counter);
+            panic!(
+                "PC jumped out of range of RAM: {0} >= {RAM}",
+                self.program_counter
+            );
         }
 
         let instruction_one = self.ram[self.program_counter];
@@ -244,7 +246,7 @@ impl CPU {
         let vy = self.var_registers[y as usize];
 
         let (sum, underflow) = self.var_registers[x as usize].overflowing_sub(vy); // = vx - vy;
-        self.var_registers[x as usize] = sum; 
+        self.var_registers[x as usize] = sum;
         if underflow {
             *self.var_registers.last_mut().unwrap() = 0;
         } else {
@@ -272,7 +274,7 @@ impl CPU {
         let msb = vx & 0b1000_0000; // 1000 0000
         let shifted = vx << 1;
         self.var_registers[x as usize] = shifted;
-        
+
         // If output is 1000 0000 MSB shift 7 times
         *self.var_registers.last_mut().unwrap() = msb >> 7;
     }
@@ -296,12 +298,10 @@ impl CPU {
     fn op_bnnn(&mut self, x: u8, nnn: u16) {
         let v0 = self.var_registers[0];
         let mut jump_loc = v0 + nnn as u8;
-        
+
         if self.super_chip {
             jump_loc = self.var_registers[x as usize] + nnn as u8;
         }
-
-        println!("Jump loc: {jump_loc}");
         self.program_counter = jump_loc as usize;
     }
 
@@ -327,14 +327,14 @@ impl CPU {
     fn op_ex9e(&mut self, x: u8) {
         let vx = self.var_registers[x as usize];
         if self.keys[vx as usize] {
-            self.program_counter +=2;
+            self.program_counter += 2;
         }
     }
 
     fn op_exa1(&mut self, x: u8) {
         let vx = self.var_registers[x as usize];
         if !self.keys[vx as usize] {
-            self.program_counter +=2;
+            self.program_counter += 2;
         }
     }
 
@@ -363,7 +363,6 @@ impl CPU {
         let character = self.var_registers[x as usize];
         // println!("Current char select {:X}", character);
         self.index_register = (SPRITE_WIDTH * character) as u16;
-
     }
 
     fn op_fx33(&mut self, x: u8) {
@@ -374,15 +373,15 @@ impl CPU {
 
         let i = self.index_register as usize;
         self.ram[i] = first;
-        self.ram[i+1] = second;
-        self.ram[i+2] = third;
+        self.ram[i + 1] = second;
+        self.ram[i + 2] = third;
     }
 
     fn op_fx55(&mut self, x: u8) {
         let index = self.index_register;
         for i in 0..=x {
             let total = index + i as u16;
-        //     println!("FX55: {} {} {}", total, val, i);
+            //     println!("FX55: {} {} {}", total, val, i);
             self.ram[total as usize] = self.var_registers[i as usize] as u8;
         }
     }
@@ -391,83 +390,31 @@ impl CPU {
         let index = self.index_register;
         for i in 0..=x {
             let total = index + i as u16;
-        //     println!("FX55: {} {} {}", total, val, i);
+            //     println!("FX55: {} {} {}", total, val, i);
             self.var_registers[i as usize] = self.ram[total as usize] as u8;
         }
     }
 
-    // fn op_dxyn(&mut self, x: u8, y: u8, n: u16) {
-    //     let x_coord = self.var_registers[x as usize] % CHIP8_WIDTH as u16;
-    //     let y_coord = self.var_registers[y as usize] % CHIP8_HEIGHT as u16;
-
-    //     let vf_register = self.var_registers.last_mut().unwrap();
-    //     *vf_register = 0;
-
-    //     let mem_loc = self.index_register;
-
-    //     for row in 0..n {
-    //         let sprite_data = self.ram[(mem_loc + row) as usize];
-    //         let current_y_coord = y_coord + row;
-    //         for bit in 0..8 {
-    //             let mask = 1 << bit;
-    //             let sprite_bit = sprite_data & mask;
-    //             if sprite_bit != 0 {
-    //                 let current_x_coord = x_coord + bit;
-    //                 if usize::from(current_x_coord) >= CHIP8_WIDTH {
-    //                     break;
-    //                 }
-    //                 let screen_pixel = self.vram[current_x_coord as usize][current_y_coord as usize];
-    //                 if screen_pixel && sprite_bit == 1 {
-    //                     self.vram[current_x_coord as usize][current_y_coord as usize] = false;
-    //                     *vf_register = 1;
-    //                 } else if screen_pixel && sprite_bit == 1 {
-    //                     self.vram[current_x_coord as usize][current_y_coord as usize] = true;
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
-    // fn op_dxyn(&mut self, x: u8, y: u8, n: u16) {
-    //     println!("var_registers: {:?}", self.var_registers);
-    //     let x_coord = self.var_registers[x as usize] % CHIP8_WIDTH as u16;
-    //     let y_coord = self.var_registers[y as usize] % CHIP8_HEIGHT as u16;
-
-    //     let vf_register = self.var_registers.last_mut().unwrap();
-    //     *vf_register = 0;
-
-    //     let mem_loc = self.index_register;
-
-    //     for row in 0..n {
-    //         let sprite_data = self.ram[(mem_loc + row) as usize];
-    //         let current_y_coord = (y_coord + row) % CHIP8_HEIGHT as u16;
-    //         for bit in 0..8 {
-    //             let mask = 1 << bit;
-    //             let sprite_bit = sprite_data & mask;
-    //             if sprite_bit != 0 {
-    //                 let current_x_coord = (x_coord + bit) % CHIP8_WIDTH as u16;
-    //                 let screen_pixel = self.vram[current_x_coord as usize][current_y_coord as usize];
-    //                 if screen_pixel && sprite_bit == 1 {
-    //                     self.vram[current_x_coord as usize][current_y_coord as usize] = false;
-    //                     *vf_register = 1;
-    //                 } else if !screen_pixel && sprite_bit == 1 {
-    //                     self.vram[current_x_coord as usize][current_y_coord as usize] = true;
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
     fn op_dxyn(&mut self, x: u8, y: u8, n: u8) {
         *self.var_registers.last_mut().unwrap() = 0;
         for byte in 0..n {
-            let y = ((self.var_registers[y as usize] + byte) as usize) % CHIP8_HEIGHT;
+            let y_coord = ((self.var_registers[(y) as usize] + byte)as usize) % CHIP8_HEIGHT;
+
+            // nth byte of sprite data
+            let nth_byte = self.ram[(self.index_register + byte as u16) as usize];
+
             for bit in 0..8 {
-                let x = (self.var_registers[x as usize] as usize + bit) % CHIP8_WIDTH;
-                let color =
-                    (self.ram[(self.index_register + byte as u16) as usize] >> (7 - bit)) & 1;
-                self.var_registers[0x0f] |= color & self.vram[y][x];
-                self.vram[y][x] ^= color;
+                let x_coord = (self.var_registers[(x) as usize] as usize + bit) % CHIP8_WIDTH;
+
+                // From most to least significant bit
+                let mlsb = nth_byte >> (7 - bit) & 1;
+
+                // OR assign the result of mlsb AND pixel in RAM
+                // Basically: If the current pixel in mlsb is on as well as in vram, set VF to 1;
+                *self.var_registers.last_mut().unwrap() |= mlsb & self.vram[y_coord][x_coord];
+
+                // XOR mlsb against vram to turn off pixel if it matches and turn on the pixel if it doesn't
+                self.vram[y_coord][x_coord] ^= mlsb;
             }
         }
     }
